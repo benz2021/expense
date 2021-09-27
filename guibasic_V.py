@@ -3,6 +3,7 @@ from tkinter import ttk,messagebox
 import csv #บันทึกลงcsv
 from datetime import datetime 
 
+
 GUI = Tk()
 GUI.title('โปรแกรมบันทึกค่าใช้จ่าย')
 GUI.geometry('700x600+50+60') #สร้างขนาดหน้าต่าง +50+60 คือระยะห่างจากขอบจอแนวแกนxและyตามลำดับ
@@ -31,6 +32,7 @@ Tab = ttk.Notebook(GUI)#สร้างTab
 T1 = Frame(Tab)
 T2 = Frame(Tab)
 Tab.pack(fill=BOTH,expand=1)
+
 icon_t1 =PhotoImage(file='T1_expense.png')#ขนาดภาพ24px
 icon_t2 =PhotoImage(file='T2_expense.png')
 
@@ -53,6 +55,7 @@ def Save (event=None) :
     expense = v_expense.get() #.get()ดึงค่ามาจากv_expense = StringVar()
     price = v_price.get()
     quantity = v_quantity.get()
+    
     if expense == '':
         print('No Data')
         messagebox.showwarning('ERROR','กรุณากรอกข้อมุลให้ครบ')
@@ -61,15 +64,16 @@ def Save (event=None) :
         messagebox.showwarning('ERROR','กรุณากรอกข้อมุลให้ครบ')
         return
     elif quantity== '':
-        messagebox.showwarning('ERROR','กรุณากรอกข้อมุลให้ครบ')
-        return
+        quantity = 1
+
+    total = float(price)*float(quantity)
     try:
         total = float(price)*float(quantity)#ใช้intจะได้เฉพาะจำนนเต็ม ใช้floatมีทศนิยม
         print('รายการ : {} ราคา : {} บาท '.format(expense,price))
         print('จำนวน : {} ชิ้น รวม : {} บาท'.format(quantity,total))
        
         text ='รายการ : {} ราคา : {} บาท '.format(expense,price)#แสดงผลในโปรแกรมมาจากv_resultด้านล่าง
-        text = text + 'จำนวน : {} ชิ้น รวม : {} บาท\n'.format(quantity,total)#แสดงผลในโปรแกรม
+        text = text + 'จำนวน : {} ชิ้น รวม : {} บาท'.format(quantity,total)#แสดงผลในโปรแกรม
         v_result.set(text)
        
         v_expense.set('') #clearข้อมูลเก่า
@@ -77,15 +81,18 @@ def Save (event=None) :
         v_quantity.set('')
 
         #บันทึกข้อมูลลงในcsvต้อง import csv ด้วย
-        today = datetime.now().strftime('%a')
-        dt = datetime.now().strftime('%Y-%m-%d-%H:%M:%S') #ดึงวันที่และเวลาจากคอม
+        today = datetime.now().strftime('%a')#days['Mon']='จันทร์'
+        print(today)
+        stamp = datetime.now()
+        dt = stamp.strftime('%Y-%m-%d-%H:%M:%S') #ดึงวันที่และเวลาจากคอม
+        transactionid = stamp.strftime('%Y%m%d%H%M%f')
         dt = days[today]+'-'+dt
-        with open('savedata1.csv','a',encoding='utf-8') as f:
+        with open('savedata2.csv','a',encoding='utf-8',newline='') as f:
             #with คือสั่งเปิดไฟล์แล้วปิดอัตโนมัติ
             # 'a' การบันทึกข้อมูลต่อไปจากข้อมูลเก่าเป็น'w'จะลบข้อมูลเก่า
             #newline=''ทำให้ข้อมูลไม่มีบรรทัดว่าง
             fw = csv.writer(f) #สร้างฟังก์ชั่นสำหรับเขียนข้อมูล
-            data = (expense,price,quantity,total,dt) #ข้อมูลที่จะบันทึก
+            data = [transactionid,expense,price,quantity,total,dt] #ข้อมูลที่จะบันทึก
             fw.writerow(data)
         #ทำให้curserกลับไปช่องกรอก
         E1.focus()
@@ -139,9 +146,9 @@ v_result.set('--- รายการ ---')
 result = ttk.Label(F1,textvariable=v_result,font=FONT3,foreground='red')
 result.pack(pady=20)
 
-#----------zz----------Tab2-----------------
+#--------------------Tab2-----------------
 def read_csv():
-    with open('savedata1.csv',newline='',encoding='utf-8') as f: #ตั้งชื่อf
+    with open('savedata2.csv',newline='',encoding='utf-8') as f: #ตั้งชื่อf
         fr = csv.reader(f)
         data = list(fr)
     return data
@@ -149,7 +156,7 @@ def read_csv():
 #----------------table-------------------
 L = ttk.Label(T2,text='ตารางแสดงรายการ',font=FONT1).pack(pady=20)
 
-header = ['รายการ','ราคา (บาท)','จำนวน ','รวมทั้งหมด (บาท)','วันที่-เวลา']
+header = ['รหัสรายการ','รายการ','ราคา (บาท)','จำนวน (ชิ้น) ','รวมทั้งหมด (บาท)','วันที่-เวลา']
 resulttable = ttk.Treeview(T2,columns=header,show='headings',height=20)
 resulttable.pack()
 
@@ -159,18 +166,64 @@ resulttable.pack()
 for h in header:
     resulttable.heading(h,text=h)
 
-headerwidth = [170,70,80,100,180]
+headerwidth = [130,170,70,70,100,180]
 for h,w in zip(header,headerwidth):
     resulttable.column(h,width=w)
 
+#--------ปุ่มลบ------------------------
+alltransaction = {}
 
+
+def UpdateCSV():
+     with open('savedata2.csv','w',newline='',encoding='utf-8') as f: 
+        fw = csv.writer(f)
+        #เตรียมข้อมูลให้กลายเป็นlist
+        data = list(alltransaction.values())
+        fw.writerows(data)
+        print('Table was update')
+        #update_table()
+
+def DeleteRecord(event=None):
+    check = messagebox.askyesno('Confirm','ลบข้อมูล?')
+    print('Yes/No',check)
+
+    if check == True:
+        print('delete')
+        #print('delete')
+        select = resulttable.selection()
+        #print(select)
+        data = resulttable.item(select)
+        data = data['values']
+        transactionid = data[0]
+        #print(transactionid)
+        del alltransaction[str(transactionid)] #ลบข้อมูล
+        #print(alltransaction)
+        UpdateCSV()
+        update_table()
+    else:
+        print('cancel')
+
+BDelete = ttk.Button(T2,text ='Delete',command=DeleteRecord)
+BDelete.place(x=20,y=510)
+
+resulttable.bind('<Delete>',DeleteRecord)
+
+#---------------------------------------
 def update_table():
     resulttable.delete(*resulttable.get_children())
     #for c in resulttable.insert():
      #   resulttable.delete(c)
-    data = read_csv()
-    for d in data:
-        resulttable.insert('',0,value=d)
+    try: #ป้องกันการerrorกรณีไม่มีcsv
+        data = read_csv()
+        for d in data:
+            #สร้างtransaction data
+            alltransaction[d[0]] = d #d[0]=transactionid
+            resulttable.insert('',0,value=d)
+        print(alltransaction)
+    except Exception as e :#ป้องกันการerrorกรณีไม่มีcsv
+        print('No File')
+        print('ERROR',e)
+
 
 update_table()
 print('GET CHILD :',resulttable.get_children())
