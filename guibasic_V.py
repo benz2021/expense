@@ -1,9 +1,9 @@
-from tkinter import * #นำเข้าแพคเกจ tkinter
+from tkinter import * 
 from tkinter import ttk,messagebox  
 import csv #บันทึกลงcsv
-from datetime import datetime #บันทึกเวลาและวันที่
+from datetime import datetime 
 
-GUI = Tk() #mainหลัก Tkมาจาก*ข้างบนที่import
+GUI = Tk()
 GUI.title('โปรแกรมบันทึกค่าใช้จ่าย')
 GUI.geometry('700x600+50+60') #สร้างขนาดหน้าต่าง +50+60 คือระยะห่างจากขอบจอแนวแกนxและyตามลำดับ
 #------------------menubar-------------
@@ -176,4 +176,4 @@ update_table()
 print('GET CHILD :',resulttable.get_children())
 #------------------------------------------
 GUI.bind('<Tab>',lambda x: E2.focus())
-GUI.mainloop() #ใส่เพื่อให้โปรแกรมรันตลอดเวลาอยู่บรรทัดสุดท้าย
+GUI.mainloop()
