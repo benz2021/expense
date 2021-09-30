@@ -2,7 +2,6 @@ from tkinter import *
 from tkinter import ttk,messagebox  
 import csv #บันทึกลงcsv
 from datetime import datetime 
-
 #--------------database---------------------------------
 import sqlite3
 
@@ -30,8 +29,7 @@ c.execute("""CREATE TABLE IF NOT EXISTS expenselist (
             total REAL,
             datetime TEXT
         )""")
-
-#ฟังก์ชั่นinaertข้อมูล
+#--------------------ฟังก์ชั่นinaertข้อมูล--------------------------------
 def insert_expense(transactionid,title,expense,quantity,total,datetime):
     ID = None
     with conn:
@@ -39,7 +37,29 @@ def insert_expense(transactionid,title,expense,quantity,total,datetime):
             (ID,transactionid,title,expense,quantity,total,datetime)) # ? จำนวน 7 ตัวคือ transactionid,title,expense,quantity,total,datetime และ ID
     conn.commit() # การบันทึกข้อมูลลงในฐานข้อมูล ถ้าไม่รันตัวนี้จะไม่บันทึก
     print('Insert Success!')
-#---------------------------------------------------
+
+#ฟังก์ชั่น show
+def show_expense():
+    with conn:
+        c.execute("SELECT * FROM expenselist")
+        expense = c.fetchall() # คำสั่งให้ดึงข้อมูลเข้ามา ถ้าไม่รันตัวนี้จะไม่บันทึก
+        print(expense)
+    return expense
+# --------------------ฟังก์ชั่นupdate --------------------------------
+def update_expense(transactionid,title,expense,quantity,total): # แก้ไขค่า
+    with conn:
+        c.execute("""UPDATE expenselist SET title =?,expense=?,quantity=?,total=? WHERE transactionid=?""",
+            ([title,expense,quantity,total, transactionid]))
+    conn.commit()
+    print('Data updated')
+#c.execute คือ รันคำสั่ง sql , UPDATE expenselist ชื่อtable , SET title =(?) ฟิวที่ต้องการแก้ไข , transactionid=(?) ชื่อฟิว
+# --------- ฟังก์ชั่นdelete -------------------------------------------
+def delete_expense():
+    with conn:
+        c.execute("DELETE FROM expenselist WHERE transactionid=?",([transactionid]))
+    conn.commit()
+    print('Data deleted')
+#------------------------------------------------------------------
 GUI = Tk()
 GUI.title('โปรแกรมบันทึกค่าใช้จ่าย')
 #GUI.geometry('700x600+50+60') #สร้างขนาดหน้าต่าง +50+60 คือระยะห่างจากขอบจอแนวแกนxและyตามลำดับ
@@ -56,7 +76,6 @@ GUI.geometry(f'{w}x{h}+{x:.0f}+{y:.0f}') #.0fคือไม่มีจุด�
 #------------------menubar---------------------------------------------------------
 menubar = Menu(GUI)
 GUI.config(menu=menubar)
-
 #-----file menu--------------------------------------------------------------------
 filemenu = Menu(menubar)
 filemenu = Menu(menubar,tearoff=0)#ปิด - ไม่ให้ถูกดึงมา
@@ -70,7 +89,6 @@ helpmenu = Menu(menubar)
 helpmenu = Menu(menubar,tearoff=0)
 menubar.add_cascade(label='Help',menu=helpmenu)
 helpmenu.add_command(label='About',command=About)
-
 #-------------------------Tab-------------------------------------------------------
 Tab = ttk.Notebook(GUI)#สร้างTab
 T1 = Frame(Tab)
@@ -82,12 +100,10 @@ icon_t2 =PhotoImage(file='T2_expense.png')
 
 Tab.add(T1,text=f'{"ค่าใช้จ่าย":^{30}}',image=icon_t1,compound='top')
 Tab.add(T2,text=f'{"ค่าใช้จ่ายทั้งหมด":^{30}}',image=icon_t2,compound='top')
-
 #-----------------------------------------------------------------------
 F1 = Frame(T1)#นำF1ใส่ในtab(T1)
 #F1.place(x=100,y=50)
 F1.pack()
-
 days = {'Mon':'จันทร์',
 'Tue':'อังคาร',
 'Wed': 'พุธ',
@@ -157,48 +173,40 @@ GUI.bind('<Return>',Save)#ทำให้สามารถกดenterได้ 
 FONT1 = (None,18) # Noneเปลี่ยนเป็นชื่อfontได้
 FONT2 = (None,12)
 FONT3 = (None,15)
-
 #---------image-----------
 main_icon = PhotoImage(file='icon.png')
 Mainicon = Label(F1,image=main_icon)
 Mainicon.pack()
-
 #-------------text1-----------------
 L = ttk.Label(F1,text='รายการค่าใช้จ่าย',font = FONT1).pack()
 v_expense = StringVar() #StringVar()ตัวแปลพิเศษสำหรับเก็บข้อมูลในGUI
 E1 = ttk.Entry(F1,textvariable=v_expense,font=FONT2)
 E1.pack()
-
 #-------------text2-----------------
 L = ttk.Label(F1,text='ราคา (บาท)',font = FONT1).pack()
 v_price = StringVar()
 E2 = ttk.Entry(F1,textvariable=v_price,font=FONT2)
 E2.pack()
-
 #---------------text3--------------------------
 L = ttk.Label(F1,text='จำนวน  (ชิ้น)',font = FONT1).pack()
 v_quantity = StringVar()
 E3 = ttk.Entry(F1,textvariable=v_quantity,font=FONT2)
 E3.pack()
-
 #-------------------button--------------------------------
 icon_b1 = PhotoImage(file='b_save.png')
 B2 = ttk.Button(F1,text=f'{"SAVE":>{10}}',image=icon_b1,compound='left',command=Save)#commandเรียกใช้ฟังก์ชัน 
 B2.pack(ipadx=30,ipady=5,pady=20)  
-
 #-------------แสดงผลในหน้าต่าง-------------------------------------------
 v_result = StringVar()
 v_result.set('--- รายการ ---')
 result = ttk.Label(F1,textvariable=v_result,font=FONT3,foreground='red')
 result.pack(pady=20)
-
 #--------------------Tab2--------------------------------------------
 def read_csv():
     with open('savedata2.csv',newline='',encoding='utf-8') as f: #ตั้งชื่อf
         fr = csv.reader(f)
         data = list(fr)
     return data
-       
 #----------------table resulttable-----------------------------------
 L = ttk.Label(T2,text='ตารางแสดงรายการ',font=FONT1).pack(pady=20)
 
@@ -215,7 +223,6 @@ for h in header:
 headerwidth = [130,170,70,70,100,180]
 for h,w in zip(header,headerwidth):
     resulttable.column(h,width=w)
-
 #--------ปุ่มลบ---------------------------------------------------------
 alltransaction = {}
 
@@ -227,9 +234,17 @@ def UpdateCSV():
         fw.writerows(data)
         print('Table was update')
         #update_table()
-
+#-----------สร้างฟังก์ชั่นupdareSQL-----------------------------
+def UpdateSQL():
+    data = list(alltransaction.values())
+    # print('UPDATE SQL:',data[0])
+    for d in data:
+        # transactionid,title,expense,quantity,total
+        # 'd[0]=202109291837045848',d[1]='มะม่วง', d[2]=30.0, d[3]=6, d[4]=180.0, d[5]='พุธ-2021-09-29-18:37:03'
+        update_expense(d[0],d[1],d[2],d[3],d[4]) 
+#---------------------------------------------------------
 def DeleteRecord(event=None):
-    check = messagebox.askyesno('Confirm','ลบข้อมูล?')
+    check = messagebox.askyesno('Confirm?','ลบข้อมูล?')
     print('Yes/No',check)
 
     if check == True:
@@ -241,12 +256,14 @@ def DeleteRecord(event=None):
         data = data['values']
         transactionid = data[0]
         #print(transactionid)
-        del alltransaction[str(transactionid)] #ลบข้อมูล
+        del alltransaction[str(transactionid)] # ลบข้อมูลในdict
         #print(alltransaction)
-        UpdateCSV()
+        #UpdateCSV()
+        delete_expense(str(transactionid))         #delete in DB
         update_table()
     else:
-        print('cancel')
+        #print('cancel')
+        pass
 
 BDelete = ttk.Button(T2,text ='Delete',command=DeleteRecord)
 BDelete.place(x=20,y=510)
@@ -258,22 +275,20 @@ def update_table():
     #for c in resulttable.insert():
      #   resulttable.delete(c)
     try: #ป้องกันการerrorกรณีไม่มีcsv
-        data = read_csv()
+        data = show_expense() # read_csv() # เปลี่ยนเป็นshow_expense()
         for d in data:
             #สร้างtransaction data
-            alltransaction[d[0]] = d #d[0]=transactionid
-            resulttable.insert('',0,value=d)
-        print(alltransaction)
-    except Exception as e :#ป้องกันการerrorกรณีไม่มีcsv
+            alltransaction[d[1]] = d[1:] #d[0]=transactionid # เปลี่ยนจาก d เป็น d[1:] ให้ข้อมูลตรงในตาราง
+            resulttable.insert('',0,value=d[1:])
+        print('TS:',alltransaction)
+    except Exception as e: #ป้องกันการerrorกรณีไม่มีcsv
         print('No File')
         print('ERROR',e)
 #------------------right click menu-------------------------
 def EditRecord():
     POPUP = Toplevel()#คล้ายกับTK
     POPUP.geometry('500x400')
-  
     #-----ก๊อปปุ่มจากด้านบนเพื่อสร้างหน้าต่างใหม่่-------------------------------
-    
     #-------------text1-----------------
     L = ttk.Label(POPUP,text='รายการค่าใช้จ่าย',font = FONT1).pack()
     v_expense = StringVar() #StringVar()ตัวแปลพิเศษสำหรับเก็บข้อมูลในGUI
@@ -301,7 +316,9 @@ def EditRecord():
         total = v2*v3
         newdata = [olddata[0],v1,v2,v3,total,olddata[5]]
         alltransaction[str(transactionid)] = newdata
-        UpdateCSV()
+        #UpdateCSV()
+        UpdateSQL()
+        #update_expense(olddata[0],v1,v2,v3,total,olddata[5]) #single record update
         update_table()
         POPUP.destroy()#สั่งปิดPOPUP
 
@@ -322,7 +339,6 @@ def EditRecord():
 
     POPUP.mainloop()
 #-----------------------------------------------------------
-
 rightclick = Menu(GUI,tearoff=0)
 rightclick.add_command(label='Edit',command=EditRecord)
 rightclick.add_command(label='Delete',command=DeleteRecord)
@@ -333,8 +349,8 @@ def menupopup(event):
 
 resulttable.bind('<Button-3>',menupopup)
 #-----------------------------------------------------------
-
 update_table()
+#UpdateSQL()
 print('GET CHILD :',resulttable.get_children())
 #-----------------------------------------------------------
 GUI.bind('<Tab>',lambda x: E2.focus())
