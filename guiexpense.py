@@ -54,7 +54,7 @@ def update_expense(transactionid,title,expense,quantity,total): # แก้ไ�
     print('Data updated')
 #c.execute คือ รันคำสั่ง sql , UPDATE expenselist ชื่อtable , SET title =(?) ฟิวที่ต้องการแก้ไข , transactionid=(?) ชื่อฟิว
 # --------- ฟังก์ชั่นdelete -------------------------------------------
-def delete_expense():
+def delete_expense(transactionid):
     with conn:
         c.execute("DELETE FROM expenselist WHERE transactionid=?",([transactionid]))
     conn.commit()
